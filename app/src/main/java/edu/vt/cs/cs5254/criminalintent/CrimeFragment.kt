@@ -7,25 +7,26 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import edu.vt.cs.cs5254.criminalintent.databinding.FragmentCrimeBinding
+import java.util.*
+import androidx.lifecycle.Observer
 
 private const val TAG = "CrimeFragment"
+private const val ARG_CRIME_ID = "crime_id"
 
 class CrimeFragment : Fragment() {
     private var _binding: FragmentCrimeBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: CrimeViewModel by lazy {
-        ViewModelProvider(this).get(CrimeViewModel::class.java)
+    private val viewModel: CrimeDetailViewModel by lazy {
+        ViewModelProvider(this).get(CrimeDetailViewModel::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, "Crime fragment created for crime with ID ${viewModel.crime.id}")
+        val crimeId: UUID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
+        viewModel.loadCrime(crimeId)
     }
 
     override fun onCreateView(inflater: LayoutInflater,
@@ -37,6 +38,18 @@ class CrimeFragment : Fragment() {
             isEnabled = false
         }
         return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.crimeLiveData.observe(
+            viewLifecycleOwner,
+            Observer { crime ->
+                crime?.let {
+                    viewModel.crime = crime
+                    updateUI()
+                }
+            })
     }
 
     override fun onStart() {
@@ -58,79 +71,34 @@ class CrimeFragment : Fragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        viewModel.saveCrime(viewModel.crime)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
+    private fun updateUI() {
+        binding.crimeTitle.setText(viewModel.crime.title)
+        binding.crimeDate.text = viewModel.crime.date.toString()
+        binding.crimeSolved.isChecked = viewModel.crime.isSolved
+        binding.crimeSolved.apply {
+            isChecked = viewModel.crime.isSolved
+            jumpDrawablesToCurrentState()
+        }
+    }
+
     companion object {
-        fun newInstance(): CrimeFragment {
-            return CrimeFragment()
+        fun newInstance(crimeId: UUID): CrimeFragment {
+            val args = Bundle().apply {
+                putSerializable(ARG_CRIME_ID, crimeId)
+            }
+            return CrimeFragment().apply {
+                arguments = args
+            }
         }
     }
 }
-
-//BNR code before following Dr K's Q&A
-//
-//class CrimeFragment : Fragment() {
-//
-//    private lateinit var crime: Crime
-//    private lateinit var titleField: EditText
-//    private lateinit var dateButton: Button
-//    private lateinit var solvedCheckBox: CheckBox
-//
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        crime = Crime()
-//    }
-//
-//    override fun onCreateView(
-//        inflater: LayoutInflater,
-//        container: ViewGroup?,
-//        savedInstanceState: Bundle?
-//    ): View? {
-//        val view = inflater.inflate(R.layout.fragment_crime, container, false)
-//
-//        titleField = view.findViewById(R.id.crime_title) as EditText
-//        dateButton = view.findViewById(R.id.crime_date) as Button
-//        solvedCheckBox = view.findViewById(R.id.crime_solved) as CheckBox
-//        dateButton.apply {
-//            text = crime.date.toString()
-//            isEnabled = false
-//        }
-//
-//        return view
-//    }
-//
-//    override fun onStart() {
-//        super.onStart()
-//        val titleWatcher = object : TextWatcher {
-//            override fun beforeTextChanged(
-//                sequence: CharSequence?,
-//                start: Int,
-//                count: Int,
-//                after: Int
-//            ) {
-//
-//            }
-//            override fun onTextChanged(
-//                sequence: CharSequence?,
-//                start: Int,
-//                before: Int,
-//                count: Int
-//            ) {
-//                crime.title = sequence.toString()
-//            }
-//            override fun afterTextChanged(sequence: Editable?) {
-//
-//            }
-//        }
-//        titleField.addTextChangedListener(titleWatcher)
-//
-//        solvedCheckBox.apply {
-//            setOnCheckedChangeListener { _, isChecked ->
-//                crime.isSolved = isChecked
-//            }
-//        }
-//    }
-//}
