@@ -3,6 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+apply plugin: 'kotlin-kapt'
+
 android {
     compileSdk 32
 
@@ -46,4 +48,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.room:room-runtime:2.5.0-alpha01'
+    kapt 'androidx.room:room-compiler:2.5.0-alpha01'
 }
