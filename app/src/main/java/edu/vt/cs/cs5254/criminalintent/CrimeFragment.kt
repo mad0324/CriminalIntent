@@ -15,6 +15,8 @@ import androidx.lifecycle.Observer
 
 private const val TAG = "CrimeFragment"
 private const val ARG_CRIME_ID = "crime_id"
+const val REQUEST_KEY = "request_key"
+const val ARG_NEW_DATE = "new_date"
 
 class CrimeFragment : Fragment() {
     private var _binding: FragmentCrimeBinding? = null
@@ -35,7 +37,6 @@ class CrimeFragment : Fragment() {
         val view = binding.root
         binding.crimeDate.apply {
             text = viewModel.crime.date.toString()
-            isEnabled = false
         }
         return view
     }
@@ -68,6 +69,18 @@ class CrimeFragment : Fragment() {
             setOnCheckedChangeListener { _, isChecked ->
                 viewModel.crime.isSolved = isChecked
             }
+        }
+
+        binding.crimeDate.setOnClickListener {
+            DatePickerFragment.newInstance(viewModel.crime.date, REQUEST_KEY)
+                .show(parentFragmentManager, REQUEST_KEY)
+        }
+        parentFragmentManager.setFragmentResultListener(
+            REQUEST_KEY,
+            viewLifecycleOwner)
+        { _, bundle ->
+            viewModel.crime.date = bundle.getSerializable(ARG_NEW_DATE) as Date
+            updateUI()
         }
     }
 
